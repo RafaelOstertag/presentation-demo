@@ -1,0 +1,104 @@
+#!/bin/sh
+
+cols=`tput cols`
+openssl_conf=openssl.conf
+
+trap "{ rm -f $openssl_conf; }" EXIT
+
+function marker() {
+    printf '#%.0s' `seq 1 $cols`
+    echo -n
+}
+
+function output() {
+    marker
+    echo "# $@"
+    marker
+}
+
+function generate_config() {
+    cat > openssl.conf <<EOF
+[ req ]
+distinguished_name      = req_distinguished_name
+
+[ req_distinguished_name ]
+countryName                     = Country Name (2 letter code)
+countryName_min                 = 2
+countryName_max                 = 2
+
+stateOrProvinceName             = State or Province Name (full name)
+
+
+localityName                    = Locality Name (eg, city)
+
+0.organizationName              = Organization Name (eg, company)
+
+organizationalUnitName          = Organizational Unit Name (eg, section)
+
+commonName                      = Common Name (eg, your name or your server\'s hostname)
+commonName_max                  = 64
+
+emailAddress                    = Email Address
+emailAddress_max                = 64
+
+
+[ no_ca ]
+basicConstraints=CA:FALSE
+
+[ ca_ext ]
+basicConstraints=CA:TRUE
+EOF
+}
+
+function make_server_self_signed() {
+    output 'Server Certificate'
+
+    openssl req \
+	    -config $openssl_conf \
+	    -x509 \
+	    -newkey rsa:4096 \
+	    -keyout server_key.pem \
+	    -out server_cert.pem \
+	    -days 365 \
+	    -nodes \
+	    -extensions 'no_ca' \
+	    -subj '/C=CH/ST=Zurich/L=Winterthur/O=BA PKI Demo/OU=VPN Server/CN=vpn_server' >/dev/null
+    openssl x509 -noout -subject -issuer -in server_cert.pem
+}
+
+function make_client_ca() {
+    output 'Client CA'
+    openssl req \
+	    -config $openssl_conf \
+	    -x509 \
+	    -newkey rsa:4096 \
+	    -keyout client_ca_key.pem \
+	    -out client_ca_cert.pem \
+	    -days 365 \
+	    -nodes \
+	    -extensions 'ca_ext' \
+	    -subj '/C=CH/ST=Zurich/L=Winterthur/O=BA PKI Demo/OU=VPN Client/CN=Client CA' >/dev/null
+    openssl x509 -noout -subject -issuer -in client_ca_cert.pem
+    
+    output 'Client CA PKCS12'
+    
+    openssl pkcs12 \
+	    -export \
+	    -in client_ca_cert.pem \
+	    -inkey client_ca_key.pem \
+	    -out client_ca.pkcs12 \
+	    -name "Client CA" \
+	    -password 'pass:changeit'
+
+    openssl pkcs12 \
+	    -info \
+	    -noout \
+	    -password 'pass:changeit' \
+	    -in client_ca.pkcs12
+}
+
+
+generate_config
+make_server_self_signed
+make_client_ca
+
