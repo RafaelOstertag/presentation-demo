@@ -6,7 +6,9 @@ Setup a complete anath demo with openvpn.
 Requirements
 ---
 
-It requires a local docker installation to run the demo. 
+* A local docker installation to run the demo. 
+* curl
+* openssl
 
 Bootstrap
 ---
@@ -17,6 +19,9 @@ Run the bootstrap script from the repository root
 	
 It will create and launch the demo. Upon each invocation of
 `bootstrap.sh`, the CA is discarded and created from scratch.
+
+The administrator password is written to the file
+`ANATH_ADMIN_PASSWORD` in the repository root.
 
 
 Starting and Stopping demo
@@ -48,3 +53,25 @@ Starting Firefox
 1. Point firefox to `http://10.1.0.3`
 
 This procedure has been tested on Fedora 27 with Xorg.
+
+Internals
+---
+
+The services
+* userdb
+* pkidb
+* anath-server
+* anath-client
+are connected to the `anath-demo-net`. The Anath Server is exposed on
+port 8080 and the Client on port 8081.
+
+The openvpn service is connected to the `anath-demo-net`,
+`client-net`, and `int-net` networks. It does not expose any
+ports. The vpn network is `10.0.0.0/24` and is not managed or known to docker.
+
+The webserver service is connected to the `int-net` and does not
+expose any ports. Upon start up, a route to the `10.0.0.0/24` network
+via the openvpn service is established.
+
+The client service has firefox and openvpn installed and is connected
+to the `client-net`.
