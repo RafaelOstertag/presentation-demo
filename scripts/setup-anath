@@ -4,7 +4,7 @@
 
 set -e
 
-source scripts/shlib
+. scripts/shlib
 
 PASSWD_FILE=ANATH_ADMIN_PASSWORD
 ANATH_CA=certs/ca.pkcs12

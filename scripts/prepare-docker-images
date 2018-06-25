@@ -4,7 +4,7 @@
 
 set -e
 
-source scripts/shlib
+. scripts/shlib
 
 server_cert=certs/server_cert.pem
 server_key=certs/server_key.pem

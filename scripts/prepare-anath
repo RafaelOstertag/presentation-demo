@@ -5,7 +5,7 @@
 
 set -eu
 
-source scripts/shlib
+. scripts/shlib
 
 if [ ! -d docker-compose ]
 then
@@ -13,7 +13,7 @@ then
 fi
 
 set +u
-source docker-compose/bin/activate
+. docker-compose/bin/activate
 set -u
 pip install docker-compose
 
