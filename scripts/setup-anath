@@ -2,6 +2,8 @@
 #
 # Setup CA, openvpn configuration, and user in anath.
 
+set -e
+
 source scripts/shlib
 
 PASSWD_FILE=ANATH_ADMIN_PASSWORD

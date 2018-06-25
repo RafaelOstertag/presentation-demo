@@ -2,6 +2,8 @@
 #
 # Bootstrap the Demo. Existing data will be erased.
 
+set -e
+
 source scripts/shlib
 
 output 'Boostrap Anath Demo'
