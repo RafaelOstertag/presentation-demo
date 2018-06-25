@@ -1,8 +1,14 @@
 #!/bin/sh
+#
+# Copy openvpn server cert and key as well as CA to openvpn docker image
+
+source scripts/shlib
 
 server_cert=certs/server_cert.pem
 server_key=certs/server_key.pem
 client_ca=certs/ca_cert.pem
+
+output 'Prepare docker/openvpn docker image'
 
 for f in "${server_cert}" "${server_key}" "${client_ca}"
 do
@@ -13,8 +19,6 @@ do
     fi
     cp "$f" docker/openvpn
 done
-
-docker build -t openvpn:latest docker/openvpn
 
 
 	

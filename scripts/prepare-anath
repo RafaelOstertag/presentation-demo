@@ -1,6 +1,11 @@
 #!/bin/sh
+#
+# Prepare anath demo environment and get anath admin password.
+# Existing anath demo data are deleted.
 
 set -eu
+
+source scripts/shlib
 
 if [ ! -d docker-compose ]
 then
@@ -11,17 +16,21 @@ set +u
 source docker-compose/bin/activate
 set -u
 
-echo "Stop Anath Demo"
-docker-compose -f demo/docker-compose.yml down || true
+output "Stop Anath Demo"
+docker-compose --project-name demo -f docker-compose.yml down || true
 
-echo "Remove existing databases"
+output "Remove docker images"
+docker rm demo_client_1 demo_openvpn_1 || true
+docker rmi nginx openvpn || true
+
+output "Remove existing databases"
 docker rm demo_userdb_1 demo_pkidb_1 || true
 docker volume rm demo_pkidb demo_userdb || true
 
-echo "Start Anath Demo"
-docker-compose -f demo/docker-compose.yml up -d
+output "Start Anath Demo"
+docker-compose --project-name demo -f docker-compose.yml up -d
 
-echo "Wait for administrator password"
+output "Wait for administrator password"
 
 counter=0
 while [ $counter -lt 60 ]
@@ -45,4 +54,3 @@ then
 fi
 
 echo "$admin_password" > ANATH_ADMIN_PASSWORD
-

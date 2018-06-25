@@ -1,0 +1,125 @@
+---
+#
+# Uses the latest release of anath
+
+version: "3.2"
+services:
+  userdb:
+    image: postgres:10-alpine
+    networks:
+      - anath-demo-net
+    volumes:
+      - type: volume
+        source: userdb
+        target: /var/lib/postgresql/data
+      - type: bind
+        source: ./user-db-init
+        target: /docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  pkidb:
+    image: postgres:10-alpine
+    networks:
+      - anath-demo-net
+    volumes:
+      - type: volume
+        source: pkidb
+        target: /var/lib/postgresql/data
+      - type: bind
+        source: ./pki-db-init
+        target: /docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  anath-server:
+    image: anathpki/server:latest
+    ports:
+      - 8080:8080
+    networks:
+      - anath-demo-net
+    env_file:
+      - anath-server.env
+    depends_on:
+      - pkidb
+      - userdb
+    healthcheck:
+      test: ["CMD-SHELL", "wget -O - -q -S http://localhost:8080/swagger-ui.html >/dev/null || exit 1"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+
+  anath-client:
+    image: anathpki/client:latest
+    ports:
+      - 8081:80
+    networks:
+      - anath-demo-net
+    env_file:
+      - anath-client.env
+    depends_on:
+      - anath-server
+    healthcheck:
+      test: ["CMD-SHELL", "wget -O - -q -S http://localhost:80/index.html >/dev/null || exit 1"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+
+  openvpn:
+    image: openvpn
+    build: ./docker/openvpn
+    ports:
+      - 1194:1194/udp
+    privileged: true
+    networks:
+      - anath-demo-net
+      - client-net
+      - int-net
+
+  webserver:
+    image: nginx
+    build: ./docker/nginx
+    privileged: true
+    networks:
+      - int-net
+    depends_on:
+      - openvpn
+
+  client:
+    image: client
+    build: ./docker/client
+    privileged: true
+    networks:
+      - client-net
+    depends_on:
+      - openvpn
+    environment:
+      - DISPLAY=$DISPLAY
+    volumes:
+      - type: bind
+        source: /tmp/.X11-unix
+        target: /tmp/.X11-unix
+      
+networks:
+  anath-demo-net:
+    driver: bridge
+  int-net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.1.0.0/24
+
+  client-net:
+    driver: bridge
+    
+
+volumes:
+  userdb:
+  pkidb:

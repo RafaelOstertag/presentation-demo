@@ -1,4 +1,8 @@
 #!/bin/sh
+#
+# Setup CA, openvpn configuration, and user in anath.
+
+source scripts/shlib
 
 PASSWD_FILE=ANATH_ADMIN_PASSWORD
 ANATH_CA=certs/ca.pkcs12
@@ -27,6 +31,7 @@ echo "$bearer"
 
 pkcs12=`base64 "${ANATH_CA}" | tr '\n' '#' | sed 's/#/\\\\n/g'`
 
+output 'Import CA into Anath'
 curl -XPUT\
      -i \
      -H 'Content-Type: application/vnd.anath.extension.v1+json' \
@@ -35,6 +40,7 @@ curl -XPUT\
      --data "{ \"password\": \"changeit\", \"pkcs12\": \"${pkcs12}\" }" \
      http://localhost:8080/
 
+output 'Create user user1@example.com'
 curl -XPOST\
      -i \
      -H 'Content-Type: application/vnd.anath.extension.v1+json' \
@@ -49,12 +55,13 @@ curl -XPOST\
        	}"\
 	    http://localhost:8080/users/
 
+output 'Create openvpn configuration'
 curl -XPOST\
      -i \
      -H 'Content-Type: application/vnd.anath.extension.v1+json' \
      -H 'Accept: application/vnd.anath.extension.v1+json' \
      -H "$bearer" \
      --data '{ "use": "openvpn",
-"configuration": "dev tun\npersist-tun\npersist-key\ncipher AES-256-CBC\nauth SHA1\ntls-client\nclient\nresolv-retry infinite\nremote 5.148.176.74 1194 udp\n\nremote-cert-tls server\n\n<ca>\n${caCertificate}</ca>\n<cert>\n${userCertificate}</cert>\n<key>\n${userPrivateKey}\n</key>\n\nkey-direction 1\n"
+"configuration": "dev tun\npersist-tun\npersist-key\ncipher AES-256-CBC\nauth SHA1\ntls-client\nclient\nresolv-retry infinite\nremote openvpn 1194 udp\nport 1195\n<ca>\n${caCertificate}</ca>\n<cert>\n${userCertificate}</cert>\n<key>\n${userPrivateKey}\n</key>\n\nkey-direction 1\n"
 }'\
 	    http://localhost:8080/uses/

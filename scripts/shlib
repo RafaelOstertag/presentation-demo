@@ -1,0 +1,13 @@
+cols=`tput cols`
+openssl_conf=certs/openssl.conf
+
+function marker() {
+    printf '#%.0s' `seq 1 $cols`
+    echo -n
+}
+
+function output() {
+    marker
+    echo "# $@"
+    marker
+}
