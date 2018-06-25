@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Prepare anath demo environment and get anath admin password.
 # Existing anath demo data are deleted.
@@ -15,6 +15,7 @@ fi
 set +u
 source docker-compose/bin/activate
 set -u
+pip install docker-compose
 
 output "Stop Anath Demo"
 docker-compose --project-name demo -f docker-compose.yml down || true
