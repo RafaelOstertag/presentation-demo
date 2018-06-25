@@ -67,6 +67,11 @@ basicConstraints=CA:TRUE
 EOF
 }
 
+function make_dh_file() {
+    output 'Create dh file'
+    openssl dhparam -outform PEM -out certs/dh2048.pem 2048
+}
+
 function make_server_cert() {
     output 'Server CSR'
 
@@ -130,5 +135,4 @@ mkdir -p certs
 generate_config
 make_ca
 make_server_cert
-
-
+make_dh_file
