@@ -7,6 +7,7 @@ Requirements
 ---
 
 * A local docker installation to run the demo. 
+* Python virtualenv
 * curl
 * openssl
 
