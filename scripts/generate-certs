@@ -69,7 +69,12 @@ EOF
 
 function make_dh_file() {
     output 'Create dh file'
-    openssl dhparam -outform PEM -out certs/dh2048.pem 2048
+    if [ ! -f certs/dh2048.pem ]
+    then
+	openssl dhparam -outform PEM -out certs/dh2048.pem 2048
+    else
+	echo "certs/dh2048.pem already exists."
+    fi
 }
 
 function make_server_cert() {
