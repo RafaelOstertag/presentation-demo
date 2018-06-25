@@ -21,8 +21,8 @@ output "Stop Anath Demo"
 docker-compose --project-name demo -f docker-compose.yml down || true
 
 output "Remove docker images"
-docker rm demo_client_1 demo_openvpn_1 || true
-docker rmi nginx openvpn || true
+docker rm demo_client_1 demo_openvpn_1 demo_webserver_1 || true
+docker rmi nginx openvpn client || true
 
 output "Remove existing databases"
 docker rm demo_userdb_1 demo_pkidb_1 || true
