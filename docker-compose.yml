@@ -74,8 +74,6 @@ services:
   openvpn:
     image: openvpn
     build: ./docker/openvpn
-    ports:
-      - 1194:1194/udp
     privileged: true
     networks:
       - anath-demo-net
