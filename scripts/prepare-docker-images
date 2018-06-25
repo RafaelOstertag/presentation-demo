@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/bash
 #
 # Copy openvpn server cert and key as well as CA to openvpn docker image
 

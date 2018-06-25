@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 #
 # Prepare anath demo environment and get anath admin password.
 # Existing anath demo data are deleted.

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/bash
 #
 # Bootstrap the Demo. Existing data will be erased.
 
