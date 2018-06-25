@@ -4,7 +4,7 @@
 
 set -e
 
-source scripts/shlib
+. scripts/shlib
 
 output 'Boostrap Anath Demo'
 

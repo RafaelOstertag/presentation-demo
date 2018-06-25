@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source scripts/shlib
+. scripts/shlib
 
 if [ ! -d docker-compose ]
 then
