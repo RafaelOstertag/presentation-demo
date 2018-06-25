@@ -9,7 +9,7 @@ set -e
 function generate_config() {
     output 'Create Config'
 
-    rm -f certs/*
+    rm -f certs/index.* certs/serial*
     touch certs/index.txt certs/index.txt.attr
     cat > certs/openssl.conf <<EOF
 [ ca ]
