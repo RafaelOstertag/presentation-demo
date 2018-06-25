@@ -9,10 +9,11 @@ source scripts/shlib
 server_cert=certs/server_cert.pem
 server_key=certs/server_key.pem
 client_ca=certs/ca_cert.pem
+dh_file=certs/dh2048.pem
 
 output 'Prepare docker/openvpn docker image'
 
-for f in "${server_cert}" "${server_key}" "${client_ca}"
+for f in "${server_cert}" "${server_key}" "${client_ca}" "${dh_file}"
 do
     if [ ! -f "$f" ]
     then
