@@ -1,0 +1,60 @@
+#!/bin/sh
+
+PASSWD_FILE=ANATH_ADMIN_PASSWORD
+ANATH_CA=certs/ca.pkcs12
+
+if [ ! -f "${ANATH_CA}" ]
+then
+    echo "${ANATH_CA} not found. Did you run 'certs/generate'?" >&2
+    exit 1
+fi
+
+if [ ! -f "${PASSWD_FILE}" ]
+then
+    echo "${ANATH_ADMIN_PASSWORD} not found. Did you run 'prepare-anath'?" >&2
+    exit 2
+fi
+
+password=`cat ${PASSWD_FILE} | tr -d '\n'`
+
+bearer=`curl -XPOST \
+     -i \
+     -H 'Content-Type: application/vnd.anath.extension.v1+json' \
+     --data "{ \"username\": \"admin@localhost.localdomain\", \"password\": \"${password}\" }" \
+     http://localhost:8080/login/jwt | grep '^Authorization'`
+
+echo "$bearer"
+
+pkcs12=`base64 "${ANATH_CA}" | tr '\n' '#' | sed 's/#/\\\\n/g'`
+
+curl -XPUT\
+     -i \
+     -H 'Content-Type: application/vnd.anath.extension.v1+json' \
+     -H 'Accept: application/vnd.anath.extension.v1+json' \
+     -H "$bearer" \
+     --data "{ \"password\": \"changeit\", \"pkcs12\": \"${pkcs12}\" }" \
+     http://localhost:8080/
+
+curl -XPOST\
+     -i \
+     -H 'Content-Type: application/vnd.anath.extension.v1+json' \
+     -H 'Accept: application/vnd.anath.extension.v1+json' \
+     -H "$bearer" \
+     --data "{
+	\"email\": \"user1@example.com\",
+	\"lastname\": \"Kirk\",
+	\"firstname\": \"James\",
+	\"admin\": false,
+	\"password\": \"test1234.\"
+       	}"\
+	    http://localhost:8080/users/
+
+curl -XPOST\
+     -i \
+     -H 'Content-Type: application/vnd.anath.extension.v1+json' \
+     -H 'Accept: application/vnd.anath.extension.v1+json' \
+     -H "$bearer" \
+     --data '{ "use": "openvpn",
+"configuration": "dev tun\npersist-tun\npersist-key\ncipher AES-256-CBC\nauth SHA1\ntls-client\nclient\nresolv-retry infinite\nremote 5.148.176.74 1194 udp\n\nremote-cert-tls server\n\n<ca>\n${caCertificate}</ca>\n<cert>\n${userCertificate}</cert>\n<key>\n${userPrivateKey}\n</key>\n\nkey-direction 1\n"
+}'\
+	    http://localhost:8080/uses/

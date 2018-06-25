@@ -1,0 +1,48 @@
+#!/bin/sh
+
+set -eu
+
+if [ ! -d docker-compose ]
+then
+	virtualenv docker-compose
+fi
+
+set +u
+source docker-compose/bin/activate
+set -u
+
+echo "Stop Anath Demo"
+docker-compose -f demo/docker-compose.yml down || true
+
+echo "Remove existing databases"
+docker rm demo_userdb_1 demo_pkidb_1 || true
+docker volume rm demo_pkidb demo_userdb || true
+
+echo "Start Anath Demo"
+docker-compose -f demo/docker-compose.yml up -d
+
+echo "Wait for administrator password"
+
+counter=0
+while [ $counter -lt 60 ]
+do
+    admin_password=`docker logs demo_anath-server_1 | awk '/password: / { print $2 }'`
+    if [ -z "$admin_password" ]
+    then
+	printf "(%03d) Wait for admin password \r" $counter
+	sleep 1
+	counter=$(( counter + 1 ))
+    else
+	echo "Got admin password: $admin_password "
+	break
+    fi
+done
+
+if [ -z "$admin_password" ]
+then
+    echo "Password not seen after $counter tries. Aborting" >&2
+    exit 1
+fi
+
+echo "$admin_password" > ANATH_ADMIN_PASSWORD
+

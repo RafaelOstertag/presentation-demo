@@ -1,9 +1,9 @@
 #!/bin/sh
 
-cols=`tput cols`
-openssl_conf=openssl.conf
+set -e
 
-trap "{ rm -f $openssl_conf; }" EXIT
+cols=`tput cols`
+openssl_conf=certs/openssl.conf
 
 function marker() {
     printf '#%.0s' `seq 1 $cols`
@@ -17,7 +17,34 @@ function output() {
 }
 
 function generate_config() {
-    cat > openssl.conf <<EOF
+    output 'Create Config'
+
+    rm -f certs/*
+    touch certs/index.txt certs/index.txt.attr
+    cat > certs/openssl.conf <<EOF
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+dir = ./certs
+database = \$dir/index.txt
+serial = \$dir/serial
+certificate = \$dir/ca_cert.pem
+private_key = \$dir/ca_key.pem
+default_md = SHA256
+certs = \$dir/
+new_certs_dir = \$dir
+policy = name_policy
+
+[ name_policy ]
+countryName             = match
+stateOrProvinceName     = match
+organizationName        = match
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
+
 [ req ]
 distinguished_name      = req_distinguished_name
 
@@ -50,43 +77,52 @@ basicConstraints=CA:TRUE
 EOF
 }
 
-function make_server_self_signed() {
-    output 'Server Certificate'
+function make_server_cert() {
+    output 'Server CSR'
 
     openssl req \
 	    -config $openssl_conf \
-	    -x509 \
 	    -newkey rsa:4096 \
-	    -keyout server_key.pem \
-	    -out server_cert.pem \
-	    -days 365 \
+	    -keyout certs/server_key.pem \
+	    -out certs/server.req \
 	    -nodes \
-	    -extensions 'no_ca' \
 	    -subj '/C=CH/ST=Zurich/L=Winterthur/O=BA PKI Demo/OU=VPN Server/CN=vpn_server' >/dev/null
-    openssl x509 -noout -subject -issuer -in server_cert.pem
+
+    output 'Sign Server CSR'
+    openssl ca \
+	    -batch \
+	    -config $openssl_conf \
+	    -create_serial \
+	    -days 365 \
+	    -extensions 'no_ca'\
+	    -out certs/server_cert.pem\
+	    -in certs/server.req
+    
+    
+    openssl x509 -noout -subject -issuer -in certs/server_cert.pem
 }
 
-function make_client_ca() {
-    output 'Client CA'
+function make_ca() {
+    output 'CA'
     openssl req \
 	    -config $openssl_conf \
 	    -x509 \
 	    -newkey rsa:4096 \
-	    -keyout client_ca_key.pem \
-	    -out client_ca_cert.pem \
+	    -keyout certs/ca_key.pem \
+	    -out certs/ca_cert.pem \
 	    -days 365 \
 	    -nodes \
 	    -extensions 'ca_ext' \
-	    -subj '/C=CH/ST=Zurich/L=Winterthur/O=BA PKI Demo/OU=VPN Client/CN=Client CA' >/dev/null
-    openssl x509 -noout -subject -issuer -in client_ca_cert.pem
+	    -subj '/C=CH/ST=Zurich/L=Winterthur/O=BA PKI Demo/CN=DEMO CA' >/dev/null
+    openssl x509 -noout -subject -issuer -in certs/ca_cert.pem
     
-    output 'Client CA PKCS12'
+    output 'CA PKCS12'
     
     openssl pkcs12 \
 	    -export \
-	    -in client_ca_cert.pem \
-	    -inkey client_ca_key.pem \
-	    -out client_ca.pkcs12 \
+	    -in certs/ca_cert.pem \
+	    -inkey certs/ca_key.pem \
+	    -out certs/ca.pkcs12 \
 	    -name "Client CA" \
 	    -password 'pass:changeit'
 
@@ -94,11 +130,12 @@ function make_client_ca() {
 	    -info \
 	    -noout \
 	    -password 'pass:changeit' \
-	    -in client_ca.pkcs12
+	    -in certs/ca.pkcs12
 }
 
 
 generate_config
-make_server_self_signed
-make_client_ca
+make_ca
+make_server_cert
+
 

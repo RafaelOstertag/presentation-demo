@@ -1,0 +1,20 @@
+#!/bin/sh
+
+server_cert=certs/server_cert.pem
+server_key=certs/server_key.pem
+client_ca=certs/ca_cert.pem
+
+for f in "${server_cert}" "${server_key}" "${client_ca}"
+do
+    if [ ! -f "$f" ]
+    then
+	echo "$f not found. Did you run certs/generate?" >&2
+	exit
+    fi
+    cp "$f" docker/openvpn
+done
+
+docker build -t openvpn:latest docker/openvpn
+
+
+	
