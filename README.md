@@ -58,10 +58,12 @@ Internals
 ---
 
 The services
+
 * userdb
 * pkidb
 * anath-server
 * anath-client
+
 are connected to the `anath-demo-net`. The Anath Server is exposed on
 port 8080 and the Client on port 8081.
 
