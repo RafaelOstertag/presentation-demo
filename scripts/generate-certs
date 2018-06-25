@@ -125,6 +125,8 @@ function make_ca() {
 
 output 'Create CA and Server Certificate'
 
+mkdir -p certs
+
 generate_config
 make_ca
 make_server_cert
